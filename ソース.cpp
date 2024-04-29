@@ -31,6 +31,23 @@ public:
 
 		return F;
 	}
+	bool UpdateII() {
+		bool F = false;
+		std::uniform_real_distribution<Float> ui(0, 1);
+		if (!IsObserve) {
+			Float X = ui(mt);
+			if (X < 0.5) {
+				B += X;
+			}
+			else {
+				B -= X;
+			}
+			F = true; 
+			B=std::fmod(B+3, 1);
+		}
+
+		return F;
+	}
 	bool IsZero() {
 		return B == 0.0;
 	}
@@ -83,8 +100,9 @@ int main() {
 	B->Free();
 
 	auto F = [](auto In, auto BB) {static std::mutex M; while (*BB) { std::lock_guard<std::mutex> L(M); In->Update(); }return *BB; };
+	auto F2 = [](auto In, auto BB) {static std::mutex M; while (*BB) { std::lock_guard<std::mutex> L(M); In->UpdateII(); }return *BB; };
 
-	auto A = std::async(std::launch::async, F, B, SB);
+	auto A = std::async(std::launch::async, F2, B, SB);
 
 	std::this_thread::sleep_for(std::chrono::seconds(3));
 
