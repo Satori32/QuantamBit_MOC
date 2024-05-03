@@ -5,6 +5,9 @@
 #include <thread>
 #include <memory>
 #include <mutex>
+#include <string>
+//#include <unordered_map>
+#include <vector>
 
 #include <conio.h>
 
@@ -37,14 +40,21 @@ public:
 		if (!IsObserve) {
 			Float X = ui(mt);
 			if (X < 0.5) {
-				B += X;
+				B+= X;
 			}
 			else {
 				B -= X;
 			}
 			F = true; 
-			B=std::fmod(B+3, 1);
+			B=std::fmod(B+16, 1);
 		}
+
+		return F;
+	}
+	bool UpdateIII() {
+		std::uniform_real_distribution<Float> ui(0, 1);
+		bool F = false;
+		if (!IsObserve) { std::shuffle(IN.begin(), IN.end(), mt); B = ui(mt); F = true; }
 
 		return F;
 	}
@@ -73,12 +83,29 @@ public:
 
 	Float Get() { return B; }
 
+	bool Install(const std::string& S) {
+		IN.push_back(S);
+		return true;
+	}
+
+	bool UnIntall(const std::string& S) {
+		
+		for (auto it = IN.begin(); it != IN.end(); it++) {
+			if (S == *it) { auto X = it; it--; IN.erase(X); }
+		}
+		return 0;
+	}
+	const std::vector<std::string>& GetStrings(){
+		return IN;
+	}
+
 protected:
 	//std::random_device rd();
 	//std::mt19937 mt{ rd() };
 	std::mt19937 mt;
 	Float B=0;
 	bool IsObserve = false;
+	std::vector<std::string> IN;
 };
 typedef std::shared_ptr<bool> SBool;
 
@@ -99,10 +126,17 @@ int main() {
 
 	B->Free();
 
+	B->Install("System");
+	B->Install("SubSystem");
+	B->Install("Minion");
+	B->Install("DA");
+	B->Install("DB");
+	B->Install("DC");
 	auto F = [](auto In, auto BB) {static std::mutex M; while (*BB) { std::lock_guard<std::mutex> L(M); In->Update(); }return *BB; };
 	auto F2 = [](auto In, auto BB) {static std::mutex M; while (*BB) { std::lock_guard<std::mutex> L(M); In->UpdateII(); }return *BB; };
-
-	auto A = std::async(std::launch::async, F2, B, SB);
+	auto F3 = [](auto In, auto BB) {static std::mutex M; while (*BB) { std::lock_guard<std::mutex> L(M); In->UpdateIII(); /**/for (const auto& o : In->GetStrings()) { std::cout << o << ","; } /**/ }return *BB;
+};
+	auto A = std::async(std::launch::async, F3, B, SB);
 
 	std::this_thread::sleep_for(std::chrono::seconds(3));
 
